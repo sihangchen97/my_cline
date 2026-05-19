@@ -1,0 +1,50 @@
+{
+  "mcpServers": {
+    "github.com/microsoft/playwright-mcp": {
+      "type": "stdio",
+      "command": "npx",
+      "timeout": 30,
+      "args": [
+        "-y",
+        "@playwright/mcp@latest"
+      ],
+      "disabled": false,
+      "autoApprove": [
+        "browser_press_key"
+      ]
+    },
+    "github.com/zcaceres/fetch-mcp": {
+      "command": "npx",
+      "args": [
+        "mcp-fetch-server"
+      ],
+      "disabled": false,
+      "autoApprove": []
+    },
+    "github.com/upstash/context7-mcp": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp@latest"
+      ],
+      "disabled": false,
+      "autoApprove": [
+        "query-docs"
+      ]
+    },
+    "postgres": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "postgresql://ohlc_manager:ohlc_manager@130.195.11.43:5102/ohlc"
+      ]
+    },
+    "git": {
+      "command": "uvx",
+      "args": [
+        "mcp-server-git"
+      ]
+    }
+  }
+}
