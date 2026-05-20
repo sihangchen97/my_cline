@@ -44,6 +44,16 @@ remote-repo/
 
 ---
 
+## Cline Global Paths
+
+| Platform | Global Config Dir |
+|----------|------------------|
+| macOS    | `~/Documents/Cline/` |
+| Linux    | `~/Documents/Cline/` |
+| Windows  | `%USERPROFILE%\Documents\Cline\` |
+
+---
+
 ## Phase 1: Setup (Both Modes)
 
 ### 1.1 Check or Request Remote URL
