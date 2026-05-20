@@ -10,7 +10,7 @@ tags: ["sync", "git", "configuration", "mcp", "backup", "remote"]
 
 ## Objective
 
-Sync Cline configuration files (Hooks, MCP, Rules, Workflows folders and `cline_mcp_settings.json`) to/from a remote git repository. Two modes:
+Sync Cline configuration files (Hooks, MCP, Rules, Workflows folders and MCP settings) to/from a remote git repository. Two modes:
 
 - **`upload`** — Push local configuration changes to remote
 - **`download`** — Pull remote configuration changes locally
@@ -37,13 +37,26 @@ remote-repo/
 
 ---
 
-## Cline Global Paths
+## Path Variables
 
-| Platform | Global Config Dir |
-|----------|------------------|
-| macOS    | `~/Documents/Cline/` |
-| Linux    | `~/Documents/Cline/` |
-| Windows  | `%USERPROFILE%\Documents\Cline\` |
+### CLINE_GLOBAL_PATH
+
+| Platform | Path |
+|----------|------|
+| macOS/Linux | `~/Documents/Cline/` |
+| Windows | `%USERPROFILE%\Documents\Cline\` |
+
+### CLINE_MCP_SETTINGS_PATH
+
+| Platform | Path |
+|----------|------|
+| macOS | `~/Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json` |
+| Windows | `%APPDATA%\Code\User\globalStorage\saoudrizwan.claude-dev\settings\cline_mcp_settings.json` |
+| Linux | `~/.config/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json` |
+
+**Path Variants**: Replace `Code` in the path above:
+- VS Code Insiders → `Code - Insiders`
+- VSCodium → `VSCodium`
 
 ---
 
@@ -87,7 +100,7 @@ remote-repo/
 **This step combines extraction, comparison, and confirmation into a single workflow.**
 
 1. Read `.my_cline_config` to get the `sync_keys` and `ignore_keys` lists
-2. Read the full local `cline_mcp_settings.json` (all fields) and remote `cline_mcp_settings.json` (after pull)
+2. Read the full local `$CLINE_MCP_SETTINGS_PATH` (all fields) and remote `cline_mcp_settings.json` (after pull)
 3. For each local server, extract fields according to `sync_keys` from the local config
 4. **Unknown fields handling**: If a field exists in the local config but is NOT in `sync_keys` or `ignore_keys`, use `ask_followup_question` to ask the user whether to add it to `sync_keys`, `ignore_keys`, or ignore it — then update `.my_cline_config` accordingly
 5. Compare server by server and categorize each:
@@ -145,6 +158,7 @@ For each folder (Hooks, MCP, Rules, Workflows):
 3. Show commit summary
 4. Commit: `sync: upload config - <timestamp>`
 5. Push: `git push origin main`
+6. **Update local MCP settings**: Write the confirmed merged result to `$CLINE_MCP_SETTINGS_PATH`
 
 ---
 
@@ -152,7 +166,7 @@ For each folder (Hooks, MCP, Rules, Workflows):
 
 ### 2B.1 Compare Remote vs Local MCP Settings
 
-1. Read remote `cline_mcp_settings.json` (after pull) and local version
+1. Read remote `cline_mcp_settings.json` (after pull) and local `$CLINE_MCP_SETTINGS_PATH`
 2. Compare `sync_keys` fields only (ignore `ignore_keys`): identify new (remote only), modified, unchanged
 
 ### 2B.2 Resolve MCP Conflicts
@@ -163,10 +177,10 @@ For each difference, ask user:
 
 ### 2B.3 Apply MCP Settings to Local
 
-1. Read full local `cline_mcp_settings.json` (all fields)
+1. Read full local `$CLINE_MCP_SETTINGS_PATH` (all fields)
 2. For servers using remote version: update ONLY `sync_keys` fields, preserve `ignore_keys` from local
 3. For new servers from remote: add with `sync_keys` values + defaults for `ignore_keys` (`autoApprove: []`, `disabled: false`, `timeout: 60`, `type: "stdio"`)
-4. Write merged result back to local `cline_mcp_settings.json`
+4. Write merged result back to `$CLINE_MCP_SETTINGS_PATH`
 
 ### 2B.4 Compare Other Folders
 
@@ -193,7 +207,7 @@ For each folder (Hooks, MCP, Rules, Workflows):
 
 ## Rules
 
-- **NEVER overwrite local `cline_mcp_settings.json` entirely** — always merge at field level, preserving `ignore_keys`
+- **NEVER overwrite `$CLINE_MCP_SETTINGS_PATH` entirely** — always merge at field level, preserving `ignore_keys`
 - **ALWAYS ask before deleting** a server or file
 - **ALWAYS show diff summary** before applying changes
 - **ALWAYS validate JSON format** after modifications (matching braces, no trailing commas, proper quoting) before writing
