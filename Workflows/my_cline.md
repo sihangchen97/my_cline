@@ -17,17 +17,10 @@ Sync Cline configuration files (Hooks, MCP, Rules, Workflows folders and `cline_
 
 ## Configuration: `.my_cline_config`
 
-Stored at the remote repo root. Structure:
+Stored at the remote repo root.
 
-```json
-{
-  "remote_url": "git@github.com:username/repo.git",
-  "sync_keys": ["command", "args", "env"],
-  "ignore_keys": ["autoApprove", "disabled", "timeout", "type"]
-}
-```
-
-- **`sync_keys`** — Fields to sync: `command` (launch command), `args` (CLI arguments), `env` (environment variables)
+- **`remote_url`** — The git remote repository URL (e.g., `git@github.com:username/repo.git`)
+- **`sync_keys`** — Fields to sync: `command`, `args`, `env`
 - **`ignore_keys`** — Local-only preferences, never synced: `autoApprove`, `disabled`, `timeout`, `type`
 
 ### Remote Repository Structure
@@ -56,6 +49,13 @@ remote-repo/
 
 ## Phase 1: Setup (Both Modes)
 
+### 1.0 Fast Path Check (Optional Optimization)
+
+**If ALL of the following are true, skip directly to Step 1.4:**
+- `.my_cline_config` exists and contains a valid `remote_url`
+- `.git` directory exists in the Cline config folder
+- `origin` remote is already configured and matches `remote_url` in `.my_cline_config`
+
 ### 1.1 Check or Request Remote URL
 
 1. Check if `.my_cline_config` exists locally (or after initial pull).
@@ -74,7 +74,7 @@ remote-repo/
 
 ### 1.4 Pull Latest Remote Changes
 
-1. `git fetch origin` then `git pull origin main`
+1. Run `git pull origin main 2>&1` (combined fetch + pull in a single command for speed)
 2. If merge conflicts: report conflicted files, ask user to resolve (keep theirs/ours/manual)
 3. After successful pull, read `.my_cline_config` from the repo if present
 
@@ -82,58 +82,69 @@ remote-repo/
 
 ## Phase 2A: Upload Mode
 
-### 2A.1 Extract Minimal MCP Settings
+### 2A.1 Compare and Confirm MCP Settings
 
-1. Read local `cline_mcp_settings.json`
-2. For each server in `mcpServers`, extract ONLY `sync_keys` fields (`command`, `args`, `env`)
-3. Build minimal JSON: `{"mcpServers": {"server-name": {"command": "...", "args": [...], "env": {...}}}}`
+**This step combines extraction, comparison, and confirmation into a single workflow.**
 
-### 2A.2 Compare Local vs Remote MCP Settings
+1. Read `.my_cline_config` to get the `sync_keys` and `ignore_keys` lists
+2. Read the full local `cline_mcp_settings.json` (all fields) and remote `cline_mcp_settings.json` (after pull)
+3. For each local server, extract fields according to `sync_keys` from the local config
+4. **Unknown fields handling**: If a field exists in the local config but is NOT in `sync_keys` or `ignore_keys`, use `ask_followup_question` to ask the user whether to add it to `sync_keys`, `ignore_keys`, or ignore it — then update `.my_cline_config` accordingly
+5. Compare server by server and categorize each:
+   - **New** (exists locally but not on remote)
+   - **Removed** (exists on remote but not locally)
+   - **Modified** (sync_keys fields differ)
+   - **Unchanged**
 
-1. Read remote `cline_mcp_settings.json` (after pull)
-2. Compare server by server: identify new (local only), removed (remote only), modified, unchanged
+6. **CRITICAL: For EACH difference, ask user via `ask_followup_question` one by one. Do NOT batch multiple changes.**
+   - **New server**: `[Add to remote]` / `[Skip]`
+   - **Removed server**: `[Delete from remote]` / `[Keep in remote]`
+   - **Modified server**: `[Use local]` / `[Keep remote]` / `[Merge field-by-field]`
 
-### 2A.3 Resolve MCP Conflicts
+7. Write the merged result to `cline_mcp_settings.json.tmp` based on user confirmations (minimal format, only `sync_keys`). **Do NOT write to `cline_mcp_settings.json` directly.**
 
-For each difference, ask user via `ask_followup_question`:
-- **New server**: `[Add to remote]` / `[Skip]`
-- **Removed server**: `[Delete from remote]` / `[Keep in remote]`
-- **Modified server**: `[Use local]` / `[Keep remote]` / `[Merge field-by-field]`
+**IMPORTANT: If no differences detected, state "No MCP settings changes detected" before proceeding.**
 
-Build final merged `cline_mcp_settings.json` after user confirmation.
+### 2A.2 Compare Other Folders
 
-### 2A.4 Compare Other Folders
+**CRITICAL: You MUST present the changes for EACH folder and wait for user confirmation. Do NOT skip this step even if there are no changes — explicitly state "No changes in [folder name]" if that's the case.**
 
 For each folder (Hooks, MCP, Rules, Workflows):
 1. Use `git --no-pager diff` to detect uncommitted changes
-2. Show summary of changes (added/modified/deleted)
-3. Ask user: `[Upload all]` / `[Skip folder]` / `[Select files manually]`
-4. For untracked new files: ask whether to add
+2. Show summary of changes (added/modified/deleted files)
+3. Ask user via `ask_followup_question`: `[Upload all]` / `[Skip folder]` / `[Select files manually]`
+4. For untracked new files: ask whether to add each one individually
 
-### 2A.5 Write Merged MCP Settings
-
-Write the final merged `cline_mcp_settings.json` (minimal format, only `sync_keys`) to the working directory.
+**IMPORTANT: If a folder has no changes, still mention it (e.g., "Hooks: No changes") so the user has full visibility.**
 
 ### 2A.6 Double Check Before Push
 
-**The user MUST review and confirm all data before pushing.**
+**CRITICAL: This step is MANDATORY and MUST NEVER be skipped under any circumstances.**
+**Even if there are NO pending changes, you MUST still display the summary and ask the user for final confirmation.**
 
-1. Display summary of all pending changes using `git --no-pager diff`, grouped by category:
-   - **MCP Settings**: server names + change types
-   - **Hooks/MCP/Rules/Workflows**: file paths + change types
-2. Show target branch: `origin/main` and current local branch
-3. Ask user via `ask_followup_question`:
+1. Display a complete summary of ALL pending changes using `git --no-pager diff`, grouped by category:
+   - **MCP Settings**: list each server name + change type (Add/Remove/Modify/Unchanged)
+   - **Hooks**: file paths + change types (Added/Modified/Deleted)
+   - **MCP**: file paths + change types
+   - **Rules**: file paths + change types
+   - **Workflows**: file paths + change types
+2. Show target branch: `origin/main` and current local branch name
+3. If NO changes are detected, explicitly state: "**No changes to push. Working directory is clean.**"
+4. Ask user via `ask_followup_question` with these exact options:
    - `[Confirm — Push to origin/main]`
-   - `[Push to new branch]` — ask for branch name, then `git checkout -b <name>` + commit + push
-   - `[Cancel upload]` — abort
-   - `[View full diff]` — show full diff, then re-ask
+   - `[Push to new branch]` — then ask for branch name, `git checkout -b <name>`, commit + push
+   - `[Cancel upload]` — abort without pushing
+   - `[View full diff]` — show full `git --no-pager diff` output, then re-ask this question
 
-### 2A.7 Stage, Commit and Push
+**DO NOT proceed to Step 2A.7 (Stage, Commit and Push) without explicit user confirmation from this step.**
 
-1. `git add .`
-2. Show commit summary
-3. Commit: `sync: upload config - <timestamp>`
-4. Push: `git push origin main`
+### 2A.7 Move TMP, Stage, Commit and Push
+
+1. Move the tmp file to the real one: rename `cline_mcp_settings.json.tmp` → `cline_mcp_settings.json`
+2. `git add .`
+3. Show commit summary
+4. Commit: `sync: upload config - <timestamp>`
+5. Push: `git push origin main`
 
 ---
 
@@ -174,7 +185,8 @@ For each folder (Hooks, MCP, Rules, Workflows):
 
 ## Git Command Rules
 
-- **ALWAYS use `--no-pager`** prefix for all git commands (diff, status, log, show, etc.) to prevent pager blocking.
+- **MANDATORY**: All git commands must use the `--no-pager` prefix, no exceptions
+- **Format**: `git --no-pager <command> <args>` (e.g., `git --no-pager diff`, `git --no-pager status`)
 - **Remote file syntax**: `git --no-pager show origin/main:<file_path>` — `/` separates remote/branch, `:` separates branch/path. Never use `origin:main:path` (fatal error).
 
 ---
