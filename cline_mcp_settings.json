@@ -33,6 +33,13 @@
       "args": [
         "mcp-server-git"
       ]
+    },
+    "zotero": {
+      "command": "zotero-mcp",
+      "args": [],
+      "env": {
+        "ZOTERO_LOCAL": "true"
+      }
     }
   }
 }
