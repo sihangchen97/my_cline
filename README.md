@@ -29,68 +29,39 @@ Once configured, simply tell Cline:
 
 When the user asks you to set up `my_cline`, follow these steps. The user should provide a remote git repository URL (e.g., `git@github.com:username/my_cline.git`).
 
-### Step 1: Obtain the Remote Repository URL
+### Step 1: Get Remote Repository URL
 
-1. If the user provided a repository URL, use it directly
-2. If the user did NOT provide a URL, use `ask_followup_question` to ask for the remote git repository link
-3. Accept both SSH format (`git@github.com:owner/repo.git`) and HTTPS format (`https://github.com/owner/repo.git`)
+1. If the user provided a repository URL, use it directly.
+2. If not, use `ask_followup_question` to ask for the remote git repository link.
+3. Accept SSH format (`git@github.com:owner/repo.git`) or HTTPS format (`https://github.com/owner/repo.git`).
 
-### Step 2: Fetch Workflow File from Remote
+### Step 2: Convert URL to Raw URL
 
-Convert the repository URL to a raw content URL and fetch the workflow file:
+Convert the repository URL to a GitHub raw content URL:
 
-**SSH to raw URL conversion:**
 - `git@github.com:owner/repo.git` → `https://raw.githubusercontent.com/owner/repo/main/`
-- `git@github.com:owner/repo.git` → `https://raw.githubusercontent.com/owner/repo/master/` (try main first, then master)
-
-**HTTPS to raw URL conversion:**
 - `https://github.com/owner/repo` → `https://raw.githubusercontent.com/owner/repo/main/`
 
-**Fetch the workflow file:**
-Use `fetch_txt` or `fetch_readable` to get `Workflows/my_cline.md` from the raw URL:
+### Step 3: Download Files
 
-```
-https://raw.githubusercontent.com/owner/repo/main/Workflows/my_cline.md
-```
+Use `curl` to download two files from the raw URL:
 
-If the file cannot be fetched (404 or error), report the error to the user and stop.
+```bash
+# Ensure Workflows directory exists
+mkdir -p <cline_config_dir>/Workflows
 
-### Step 3: Configure `.my_cline_config`
+# Download my_cline.md
+curl -sL <raw_url>/Workflows/my_cline.md -o <cline_config_dir>/Workflows/my_cline.md
 
-Create or update the `.my_cline_config` file at the root of the Cline configuration directory with the following content:
-
-```json
-{
-  "remote_url": "<the_repository_url_provided_by_user>",
-  "sync_keys": [
-    "command",
-    "args",
-    "env"
-  ],
-  "ignore_keys": [
-    "autoApprove",
-    "disabled",
-    "timeout",
-    "type"
-  ]
-}
+# Download .my_cline_config
+curl -sL <raw_url>/.my_cline_config -o <cline_config_dir>/.my_cline_config
 ```
 
-Replace `<the_repository_url_provided_by_user>` with the actual URL the user provided.
+If either download fails (non-zero exit code), report the error to the user and stop.
 
-### Step 4: Install the Workflow
+### Step 4: First Sync
 
-Write the fetched `my_cline.md` content to the local `Workflows/` directory:
-
-```
-<cline_config_dir>/Workflows/my_cline.md
-```
-
-If the `Workflows/` directory does not exist, create it first.
-
-### Step 5: First Sync
-
-After installation is complete, tell the user to run **`my_cline download`** to perform the first sync. The workflow will automatically:
+Tell the user to run **`my_cline download`** to perform the first sync. The workflow will automatically:
 
 1. Initialize a local git repository (if not already initialized)
 2. Configure the remote `origin`
