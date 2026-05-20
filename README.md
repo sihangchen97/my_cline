@@ -46,15 +46,22 @@ Convert the repository URL to a GitHub raw content URL:
 
 Use `curl` to download two files from the raw URL:
 
+**`CLINE_GLOBAL_PATH` by platform:**
+
+| Platform | Path |
+|----------|------|
+| macOS/Linux | `~/Documents/Cline/` |
+| Windows | `$env:USERPROFILE\Documents\Cline\` |
+
 ```bash
 # Ensure Workflows directory exists
-mkdir -p <cline_config_dir>/Workflows
+mkdir -p <CLINE_GLOBAL_PATH>/Workflows
 
 # Download my_cline.md
-curl -sL <raw_url>/Workflows/my_cline.md -o <cline_config_dir>/Workflows/my_cline.md
+curl -sL <raw_url>/Workflows/my_cline.md -o <CLINE_GLOBAL_PATH>/Workflows/my_cline.md
 
 # Download .my_cline_config
-curl -sL <raw_url>/.my_cline_config -o <cline_config_dir>/.my_cline_config
+curl -sL <raw_url>/.my_cline_config -o <CLINE_GLOBAL_PATH>/.my_cline_config
 ```
 
 If either download fails (non-zero exit code), report the error to the user and stop.
