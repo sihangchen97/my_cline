@@ -25,7 +25,7 @@
       "args": [
         "-y",
         "@modelcontextprotocol/server-postgres",
-        "postgresql://ohlc_manager:ohlc_manager@130.195.11.43:5102/ohlc"
+        "postgresql://<user>:<password>@<host>:<port>/<db>"
       ]
     },
     "git": {
