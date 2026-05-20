@@ -1,0 +1,14 @@
+{
+  "remote_url": "git@github.com:sihangchen97/my_cline.git",
+  "sync_keys": [
+    "command",
+    "args",
+    "env"
+  ],
+  "ignore_keys": [
+    "autoApprove",
+    "disabled",
+    "timeout",
+    "type"
+  ]
+}
