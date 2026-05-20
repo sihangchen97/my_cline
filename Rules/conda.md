@@ -21,36 +21,43 @@ Use `conda run -n <env>` to run commands in a specific environment without activ
 
 ```bash
 conda run -n myenv python script.py
-conda run -n myenv pip install package-name
 conda run -n myenv pytest tests/
 ```
 
 ---
 
-## 3. MANDATORY: User Approval Required
+## 3. MANDATORY: Never Install Packages Yourself
 
-The following operations **ALWAYS require explicit user approval** before execution:
+- **NEVER** install any packages yourself under any circumstances
+- **NEVER** run `pip install`, `conda install`, `pip uninstall`, or `conda remove` commands at any time
+- If packages are missing, **always** report to the user with install commands and wait for them to install manually
 
-### 3.1 Environment Operations (require approval)
+### Providing Install Commands to Users
 
-- **Create environment**: `conda create --name myenv python=3.10`
-- **Remove environment**: `conda remove --name myenv --all`
+When the user needs to install packages, provide the install commands in the following priority order:
 
-### 3.2 Package Operations via Conda (require approval)
+1. **pip install (Priority)** — Always provide pip install command first:
+   ```
+   conda run -n <env> pip install <package>
+   ```
 
-- **Install**: `conda install -n myenv <package>`
-- **Update**: `conda update -n myenv <package>`
-- **Remove**: `conda remove -n myenv <package>`
+2. **conda install (Fallback)** — Only if the package is not available via pip:
+   ```
+   conda install -n <env> <package>
+   ```
 
-### 3.3 Package Operations via Pip (require approval)
+### Example Format for User
 
-- **Install**: `conda run -n myenv pip install <package>`
-- **Uninstall**: `conda run -n myenv pip uninstall <package>`
+When reporting missing packages, present them like this:
 
-### 3.4 Safe Operations (no approval needed)
+```
+The following packages are missing from the environment:
+- gradio
+- transformers
 
-- List environments: `conda info --envs`
-- List packages: `conda list -n myenv`
+Please install them using:
+  conda run -n myenv pip install gradio transformers
+```
 
 ---
 
@@ -59,10 +66,10 @@ The following operations **ALWAYS require explicit user approval** before execut
 **Before running any Python script, ALWAYS analyze the script first:**
 
 1. **Read the Python file** to identify all `import` statements
-2. **Check which packages are already installed** in the target environment: `conda list -n myenv`
+2. **Check which packages are already installed** in the target environment: `conda list -n <env>`
 3. **Compare imports vs installed packages** to identify missing dependencies
-4. **Present ALL missing packages to the user in a single batch** for approval
-5. **Install all missing packages together** after user approval
+4. **Present ALL missing packages to the user in a single batch** with install commands
+5. **Wait for the user to install the packages manually**
 
 **Example workflow:**
 
@@ -71,44 +78,56 @@ Before running script.py:
 1. Read script.py -> found imports: torch, numpy, gradio, transformers
 2. Check installed packages in env -> found: torch, numpy
 3. Missing packages: gradio, transformers
-4. Present to user: "The following packages are missing: gradio, transformers. 
-   Would you like me to install all of them?"
-5. After approval: conda run -n myenv pip install gradio transformers
+4. Present to user: "The following packages are missing: gradio, transformers.
+   Please install them using: conda run -n myenv pip install gradio transformers"
+5. Wait for user to confirm installation
 ```
 
-**Do NOT show packages one by one with separate approvals.** Batch all missing packages together for efficiency, but install them one by one for sure.
+**Do NOT show packages one by one.** Batch all missing packages together for efficiency.
 
 ---
 
-## 5. MANDATORY: Re-confirm for New Dependencies During Installation
+## 5. Handle Runtime Import Errors
 
-**During package installation, new dependencies may be discovered dynamically.** Even if the user approved the initial batch of packages:
+**If the script fails with an `ImportError` or `ModuleNotFoundError`:**
 
-- If the installation process reveals **additional new packages** that were not in the original approval list, you **MUST re-confirm** with the user before installing these new packages
-- Present the newly discovered packages to the user and get explicit approval before proceeding
-- Example: User approves installing `gradio`, but during installation `gradio` requires `websockets` which is also missing. You must ask the user again: "During installation, the following new dependencies were discovered: websockets. Would you like me to install these as well?"
-
-**Every batch of new dependencies requires a new user approval.** Never assume the initial approval covers dependencies discovered later during the installation process.
+1. Extract the missing package name(s) from the error
+2. **Report the missing packages to the user** with install commands (pip优先)
+3. **Wait for the user to install them manually**
+4. **NEVER** install the packages yourself
+5. After user confirms installation, re-run the script
 
 ---
 
-## 6. Quick Reference
+## 6. Safe Operations (No Approval Needed)
+
+- List environments: `conda info --envs`
+- List packages: `conda list -n <env>`
+- Run Python script: `conda run -n <env> python script.py`
+
+---
+
+## 7. Quick Reference
 
 ```bash
 # List environments
 conda info --envs
 
-# Create environment
-conda create --name myenv python=3.10 -y
+# List packages in environment
+conda list -n myenv
 
 # Run Python in environment
 conda run -n myenv python script.py
 
-# Install package (conda)
-conda install -n myenv numpy
+# Run pytest in environment
+conda run -n myenv pytest tests/
+```
 
-# Install package (pip)
+### User Install Commands (Provide to User, Do NOT Execute)
+
+```bash
+# pip install (preferred)
 conda run -n myenv pip install package-name
 
-# Remove environment
-conda remove --name myenv --all
+# conda install (fallback if not available via pip)
+conda install -n myenv package-name
