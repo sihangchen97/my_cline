@@ -172,6 +172,13 @@ For each folder (Hooks, MCP, Rules, Workflows):
 
 ---
 
+## Git Command Rules
+
+- **ALWAYS use `--no-pager`** prefix for all git commands (diff, status, log, show, etc.) to prevent pager blocking.
+- **Remote file syntax**: `git --no-pager show origin/main:<file_path>` — `/` separates remote/branch, `:` separates branch/path. Never use `origin:main:path` (fatal error).
+
+---
+
 ## Rules
 
 - **NEVER overwrite local `cline_mcp_settings.json` entirely** — always merge at field level, preserving `ignore_keys`
