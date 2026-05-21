@@ -130,7 +130,7 @@ For each folder (Hooks, MCP, Rules, Workflows):
 
 **IMPORTANT: If a folder has no changes, still mention it (e.g., "Hooks: No changes") so the user has full visibility.**
 
-### 2A.6 Double Check Before Push
+### 2A.3 Double Check Before Push
 
 **CRITICAL: This step is MANDATORY and MUST NEVER be skipped under any circumstances.**
 **Even if there are NO pending changes, you MUST still display the summary and ask the user for final confirmation.**
@@ -151,7 +151,7 @@ For each folder (Hooks, MCP, Rules, Workflows):
 
 **DO NOT proceed to Step 2A.7 (Stage, Commit and Push) without explicit user confirmation from this step.**
 
-### 2A.7 Move TMP, Stage, Commit and Push
+### 2A.4 Move TMP, Stage, Commit and Push
 
 1. Move the tmp file to the real one: rename `cline_mcp_settings.json.tmp` → `cline_mcp_settings.json`
 2. `git add .`
@@ -179,7 +179,7 @@ For each difference, ask user:
 
 1. Read full local `$CLINE_MCP_SETTINGS_PATH` (all fields)
 2. For servers using remote version: update ONLY `sync_keys` fields, preserve `ignore_keys` from local
-3. For new servers from remote: add with `sync_keys` values + defaults for `ignore_keys` (`autoApprove: []`, `disabled: false`, `timeout: 60`, `type: "stdio"`)
+3. For new servers from remote: add with `sync_keys` values only and do not include `ignore_keys`
 4. Write merged result back to `$CLINE_MCP_SETTINGS_PATH`
 
 ### 2B.4 Compare Other Folders
