@@ -10,8 +10,6 @@ A workflow for syncing Cline configuration files (Hooks, MCP, Rules, Workflows f
 
 `my_cline` is a Cline Workflow that helps you backup and synchronize your Cline configuration across multiple machines. It syncs the following:
 
-- `Hooks/` - Cline hooks configuration
-- `MCP/` - MCP server configurations
 - `Rules/` - Cline rules
 - `Workflows/` - Cline workflows
 - `cline_mcp_settings.json` - MCP server settings (minimal format)
@@ -51,7 +49,7 @@ Use `curl` to download two files from the raw URL:
 | Platform | Path |
 |----------|------|
 | macOS/Linux | `~/Documents/Cline/` |
-| Windows | `$env:USERPROFILE\Documents\Cline\` |
+| Windows | `$env:USERPROFILE\Cline\` |
 
 ```bash
 # Ensure Workflows directory exists
