@@ -44,7 +44,7 @@ remote-repo/
 | Platform | Path |
 |----------|------|
 | macOS/Linux | `~/Documents/Cline/` |
-| Windows | `%USERPROFILE%\Documents\Cline\` |
+| Windows | PowerShell: `(Get-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders" -Name "Personal").Personal + "\Cline\"` |
 
 ### CLINE_MCP_SETTINGS_PATH
 

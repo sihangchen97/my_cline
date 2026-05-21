@@ -49,8 +49,9 @@ Use `curl` to download two files from the raw URL:
 | Platform | Path |
 |----------|------|
 | macOS/Linux | `~/Documents/Cline/` |
-| Windows | `$env:USERPROFILE\Cline\` |
+| Windows | `(Get-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders" -Name "Personal").Personal + "\Cline\"` |
 
+**macOS/Linux:**
 ```bash
 # Ensure Workflows directory exists
 mkdir -p <CLINE_GLOBAL_PATH>/Workflows
@@ -60,6 +61,21 @@ curl -sL <raw_url>/Workflows/my_cline.md -o <CLINE_GLOBAL_PATH>/Workflows/my_cli
 
 # Download .my_cline_config
 curl -sL <raw_url>/.my_cline_config -o <CLINE_GLOBAL_PATH>/.my_cline_config
+```
+
+**Windows (PowerShell):**
+```powershell
+# Get CLINE_GLOBAL_PATH
+$CLINE_GLOBAL_PATH = (Get-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders" -Name "Personal").Personal + "\Cline\"
+
+# Ensure Workflows directory exists
+New-Item -ItemType Directory -Force -Path "$CLINE_GLOBAL_PATH\Workflows"
+
+# Download my_cline.md
+Invoke-WebRequest -Uri <raw_url>/Workflows/my_cline.md -OutFile "$CLINE_GLOBAL_PATH\Workflows\my_cline.md"
+
+# Download .my_cline_config
+Invoke-WebRequest -Uri <raw_url>/.my_cline_config -OutFile "$CLINE_GLOBAL_PATH\.my_cline_config"
 ```
 
 If either download fails (non-zero exit code), report the error to the user and stop.
